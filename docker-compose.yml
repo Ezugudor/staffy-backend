@@ -1,0 +1,47 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27018/orders
+    networks:
+      - app-network
+
+# TODO: this service simulates shopify server (serving a Json data that is in-memory)
+  shopify-server: 
+    build:
+      context: shopify-server
+      dockerfile: shopify-server/Dockerfile
+    container_name: shopify-api
+    env_file:
+      - shopify-server/.env
+    ports:
+      - "8000:8000"
+  
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
